@@ -31,7 +31,9 @@ class Agent:
             self.frontier = []
             heapq.heappush(self.frontier,(0,self.start))
             self.explored = []
-            self.map={}
+            self.map={self.start:0}
+            self.frontierList=[]
+            self.frontierList.append(self.start)
         elif self.type == "astar":
             pass
     def show_result(self):
@@ -145,10 +147,14 @@ class Agent:
         self.grid.nodes[current[1]].checked = True
         self.grid.nodes[current[1]].frontier = False
         self.explored.append(current[1])
-        # Adding the cost of the current Node
-        self.map[current[1]] = self.grid.nodes[current[1]].cost()
-
+        
+        if current[1] == self.goal:
+            self.finish = True
+            return 
+            
         children = [(current[1][0]+a[0], current[1][1]+a[1]) for a in ACTIONS]
+        
+
         #Going through each node in the list called children, which contains all the children/puddle near the current node
         for node in children:
             #See what happens if you disable this check here
@@ -163,9 +169,15 @@ class Agent:
                 else:
                     #Setting the previous node if the 'node' we are working is an actualy allowed coordinate in the grid(node)
                     currentCost = self.grid.nodes[node].cost()
-                    newCost = currentCost + self.map[current[1]]
-                    print("Old cost is: " + str(currentCost) + " newCost is: " + str(newCost))
+                    if current[1] in self.frontierList:
+                        newCost = currentCost + self.map[current[1]]
+                        print("Old cost is: " + str(currentCost) + " newCost is: " + str(newCost))
+                        self.map[node] = newCost
+                    else:
+                        print("Previous node is not present in the map/n/n")
+                        self.map[node] = currentCost
                     self.previous[node] = current[1]
+
                     # Checking to see if we found our destination/goal node that we are looking for
                     if node == self.goal:
                         self.finished = True
@@ -174,19 +186,30 @@ class Agent:
                         # Adding the current 'node' to the frontier if it not the goal node we are looking for, so we can run dfs on it later on
 
                         # Checking if the node is in the frontire or no
-                        if node not in self.frontier:
+                        if node not in self.frontierList:
                             print ("node is: " + str(node))
                             heapq.heappush(self.frontier,(newCost,node))
-                        else:
+                            
+                            print("\n\n .... Printing the frontier\n\n")
+                            """
                             for each in self.frontier:
+                                print(each)
+                            """
+                            print("Done pronting frontires")
+                            self.grid.nodes[node].frontier = True
+                            self.previous[node] = current[1]
+                            self.frontierList.append(node)
+                        else:
+                            print("\n\n In the else Part, where you should not be..\n")
+                            if node in self.frontier:
                                 if node == each[1] and each[0] > newCost:
+                                    print("Duplicate node is:" + str(node) + " and exis node is: " + str(each[1]))
                                     #remove the old node and add the new one
                                     self.frontier.remove(node)
                                     heapify(self.frontier)
                                     heapq.heappush(self.frontier,(newCost,node))
                        
                         # Setting the frontire of the given 'node' to true, to indicate it is non-empty
-                        self.grid.nodes[node].frontier = True
             else:
                 print("out of range: ", node)
     
