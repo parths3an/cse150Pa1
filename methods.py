@@ -17,6 +17,7 @@ class Agent:
         self.goal = goal
         self.grid.nodes[goal].goal = True
         self.new_plan(type)
+
     def new_plan(self, type):
         self.finished = False
         self.failed = False
@@ -35,12 +36,20 @@ class Agent:
             self.frontierList=[]
             self.frontierList.append(self.start)
         elif self.type == "astar":
-            pass
+            self.explored = []
+            startCost = self.grid.nodes[self.start].cost() + 0
+            self.map={self.start: startCost}
+            self.frontierList=[]
+            self.frontierList.append(self.start)
+            self.frontier=[]
+            heapq.heappush(self.frontier,(startCost,self.start))
+
     def show_result(self):
         current = self.goal
         while not current == self.start:
             current = self.previous[current]
             self.grid.nodes[current].in_path = True #This turns the color of the node to red
+
     def make_step(self):
         if self.type == "dfs":
             self.dfs_step()
@@ -51,9 +60,6 @@ class Agent:
         elif self.type == "astar":
             self.astar_step()      
 
-        """
-        Question: Where are we calling this function recursively? Or where it is being called in the first place? Becaues here we are only going through the given node's children and once we are done we return true or false and we do not go to the entire frontire at all. 
-        """           
     def dfs_step(self):
         #...
         if not self.frontier:
@@ -92,9 +98,7 @@ class Agent:
                         self.grid.nodes[node].frontier = True
             else:
                 print("out of range: ", node)
-        """
-        Question: For the bfs, How do we make sure that the list is beging used as a queue and not as a stack. 
-        """          
+             
     def bfs_step(self):
         if not self.frontier:
             self.failed = True
@@ -132,13 +136,9 @@ class Agent:
                         self.grid.nodes[node].frontier = True
             else:
                 print("out of range: ", node)
-    
-    
-    
+
     def ucs_step(self):
         #[Hint] you can get the cost of a node by node.cost()
-        print ("Frontier size is: " + str(len(self.frontier)))
-
         if not self.frontier:
             self.failed = True
             print("no path")
@@ -196,6 +196,73 @@ class Agent:
                                     self.frontier.remove[each]
                                     heapq.heapify(self.frontier)
                                     heapq.heappush(self.frontier,(newCost,node))
+                        self.previous[node] = current1[1]          
+            else:
+                print("out of range: ", node)
+    
+    def heuristicFunc(self,node1,node2):
+        dis = abs(node1[0]-node2[0]) + abs(node1[1]-node2[1])
+        print("H cost is: " + str(dis) + " \n\n\n")
+        return dis
+
+    def astar_step(self):
+        #[Hint] you need to declare a heuristic function for Astar
+        #[Hint] you can get the cost of a node by node.cost()
+        if not self.frontier:
+            self.failed = True
+            print("no path")
+            return
+
+        current1 = heapq.heappop(self.frontier)
+        print("current node: ", current1)
+        #...
+        self.grid.nodes[current1[1]].checked = True
+        self.grid.nodes[current1[1]].frontier = False
+        self.explored.append(current1[1])
+        
+        if current1[1] == self.goal:
+            self.finish = True
+            return 
+        children = [(current1[1][0]+a[0], current1[1][1]+a[1]) for a in ACTIONS]
+
+        #Going through each node in the list called children, which contains all the children/puddle near the current node
+        for node in children:
+            #See what happens if you disable this check here
+            if node in self.explored or node in self.frontier:
+                print("explored before: ", node)
+                continue
+            #Checking to see if the 'node' object's coordinates are in the allowed broundry of the frid or no
+            if node == self.goal:
+                self.finished = True
+                self.previous[node] = current1[1]
+                return 
+            if node[0] in range(self.grid.row_range) and node[1] in range(self.grid.col_range):
+                #Checking to see if the given node is a puddle/wall(can not be part of the path)
+                if self.grid.nodes[node].puddle:
+                    print("puddle at: ", node)
+                    continue
+                else:
+                    #Setting the previous node if the 'node' we are working is an actualy allowed coordinate in the grid(node)
+                    # Checking if the node is in the frontire or no
+                    currCost = self.grid.nodes[node].cost()
+                    newCost = currCost + self.heuristicFunc(current1[1],node)
+                    
+                    if node not in self.frontierList:
+                        print ("node is: " + str(node))
+                        heapq.heappush(self.frontier,(newCost,node))
+                        self.grid.nodes[node].frontier = True
+                        self.frontierList.append(node)
+                        heapq.heapify(self.frontier)
+                        self.map[node] = newCost
+                        self.previous[node] = current1[1]
+                    else:
+                        print("\n\n In the else Part, where you should not be..\n")
+                        for each in self.frontier:
+                                if node == each[1] and newCost < each[0]:
+                                    print("\n\n Removing some elements \n\n")
+                                    self.frontier.remove[each]
+                                    heapq.heapify(self.frontier)
+                                    heapq.heappush(self.frontier,(newCost,node))
                         self.previous[node] = current1[1]            
                         
                         """
@@ -210,10 +277,3 @@ class Agent:
                         # Setting the frontire of the given 'node' to true, to indicate it is non-empty
             else:
                 print("out of range: ", node)
-    
-
-
-
-    def astar_step(self):
-        #[Hint] you need to declare a heuristic function for Astar
-        pass
