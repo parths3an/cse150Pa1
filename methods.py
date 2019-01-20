@@ -137,21 +137,23 @@ class Agent:
     
     def ucs_step(self):
         #[Hint] you can get the cost of a node by node.cost()
+        print ("Frontier size is: " + str(len(self.frontier)))
+
         if not self.frontier:
             self.failed = True
             print("no path")
             return
-        current = heapq.heappop(self.frontier)
-        print("current node: ", current)
+        current1 = heapq.heappop(self.frontier)
+        print("current node: ", current1)
         #...
-        self.grid.nodes[current[1]].checked = True
-        self.grid.nodes[current[1]].frontier = False
-        self.explored.append(current[1])
+        self.grid.nodes[current1[1]].checked = True
+        self.grid.nodes[current1[1]].frontier = False
+        self.explored.append(current1[1])
         
-        if current[1] == self.goal:
+        if current1[1] == self.goal:
             self.finish = True
             return 
-        children = [(current[1][0]+a[0], current[1][1]+a[1]) for a in ACTIONS]
+        children = [(current1[1][0]+a[0], current1[1][1]+a[1]) for a in ACTIONS]
 
         #Going through each node in the list called children, which contains all the children/puddle near the current node
         for node in children:
@@ -167,16 +169,18 @@ class Agent:
                 #Checking to see if the given node is a puddle/wall(can not be part of the path)
                 if self.grid.nodes[node].puddle:
                     print("puddle at: ", node)
+                    continue
                 elif node == self.goal:
                     self.finish = True
-                    #TODO: Need to add the up all the cost here 
+                    #TODO: Need to add the up all the cost here
+                    self.previous[node] = current1[1] 
                     return
                 else:
                     #Setting the previous node if the 'node' we are working is an actualy allowed coordinate in the grid(node)
                     # Checking if the node is in the frontire or no
                     currCost = self.grid.nodes[node].cost()
-                    if current[1] in self.map:
-                        newCost = currCost + self.map[current[1]]
+                    if current1[1] in self.map:
+                        newCost = currCost + self.map[current1[1]]
                     else:
                         newCost = currCost
 
@@ -187,9 +191,17 @@ class Agent:
                         self.frontierList.append(node)
                         heapq.heapify(self.frontier)
                         self.map[node] = newCost
-                        self.previous[node] = current[1]
+                        self.previous[node] = current1[1]
                     else:
                         print("\n\n In the else Part, where you should not be..\n")
+                        for each in self.frontier:
+                                if node == each[1] and newCost < each[0]:
+                                    print("\n\n Removing some elements \n\n")
+                                    self.frontier.remove[each]
+                                    heapq.heapify(self.frontier)
+                                    heapq.heappush(self.frontier,(newCost,node))
+                        self.previous[node] = current1[1]            
+                        
                         """
                         if node in self.frontierList:
                             if node == each[1] and each[0] > newCost:
