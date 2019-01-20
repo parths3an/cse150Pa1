@@ -164,17 +164,13 @@ class Agent:
             #Checking to see if the 'node' object's coordinates are in the allowed broundry of the frid or no
             if node == self.goal:
                 self.finished = True
+                self.previous[node] = current1[1]
                 return 
             if node[0] in range(self.grid.row_range) and node[1] in range(self.grid.col_range):
                 #Checking to see if the given node is a puddle/wall(can not be part of the path)
                 if self.grid.nodes[node].puddle:
                     print("puddle at: ", node)
                     continue
-                elif node == self.goal:
-                    self.finish = True
-                    #TODO: Need to add the up all the cost here
-                    self.previous[node] = current1[1] 
-                    return
                 else:
                     #Setting the previous node if the 'node' we are working is an actualy allowed coordinate in the grid(node)
                     # Checking if the node is in the frontire or no
