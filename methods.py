@@ -38,10 +38,10 @@ class Agent:
         elif self.type == "astar":
             self.explored = []
             startCost = self.grid.nodes[self.start].cost() + 0
-            self.map={self.start: startCost}
             self.frontierList=[]
             self.frontierList.append(self.start)
             self.frontier=[]
+            self.map={self.start:startCost}
             heapq.heappush(self.frontier,(startCost,self.start))
 
     def show_result(self):
@@ -61,7 +61,7 @@ class Agent:
             self.astar_step()      
 
     def dfs_step(self):
-        #...
+        # Checking if the frontire is empty
         if not self.frontier:
             self.failed = True
             print("no path")
@@ -99,21 +99,26 @@ class Agent:
             else:
                 print("out of range: ", node)
              
-    def bfs_step(self):
+    def bfs_step(self): 
+        # Checking if the frontire is empty
         if not self.frontier:
             self.failed = True
             print("no path")
             return
+        # Extract the first element from the frontier 
         current = self.frontier.pop(0)
         print("current node: ", current)
-        #...
+        
+        # Setting the checks to proper boolean value 
         self.grid.nodes[current].checked = True
         self.grid.nodes[current].frontier = False
         self.explored.append(current)
+
+        # Finding all the children of the current node
         children = [(current[0]+a[0], current[1]+a[1]) for a in ACTIONS]
-        #Going through each node in the list called children, which contains all the children/puddle near the current node
+        
+        # Going through each node in the list called children, which contains all the children/puddle near the current node
         for node in children:
-            #See what happens if you disable this check here
             if node in self.explored or node in self.frontier:
                 print("explored before: ", node)
                 continue
@@ -125,12 +130,13 @@ class Agent:
                 else:
                     #Setting the previous node if the 'node' we are working is an actualy allowed coordinate in the grid(node)
                     self.previous[node] = current
+                   
                     # Checking to see if we found our destination/goal node that we are looking for
                     if node == self.goal:
                         self.finished = True
                         return
                     else:
-                        # Adding the current 'node' to the frontier if it not the goal node we are looking for, so we can run dfs on it later on
+                        # Adding the current 'node' to the frontier if it not the goal node we are looking for, so we can run dfs on it later on 
                         self.frontier.append(node)
                         # Setting the frontire of the given 'node' to true, to indicate it is non-empty
                         self.grid.nodes[node].frontier = True
@@ -138,14 +144,15 @@ class Agent:
                 print("out of range: ", node)
 
     def ucs_step(self):
-        #[Hint] you can get the cost of a node by node.cost()
+        # Checking if the frontire is empty
         if not self.frontier:
             self.failed = True
             print("no path")
             return
+
         current1 = heapq.heappop(self.frontier)
         print("current node: ", current1)
-        #...
+        # Setting the checks to proper boolean value 
         self.grid.nodes[current1[1]].checked = True
         self.grid.nodes[current1[1]].frontier = False
         self.explored.append(current1[1])
@@ -172,54 +179,60 @@ class Agent:
                     print("puddle at: ", node)
                     continue
                 else:
-                    #Setting the previous node if the 'node' we are working is an actualy allowed coordinate in the grid(node)
-                    # Checking if the node is in the frontire or no
+                    # Checking if the previous of the 'node' exists 
                     currCost = self.grid.nodes[node].cost()
                     if current1[1] in self.map:
                         newCost = currCost + self.map[current1[1]]
                     else:
                         newCost = currCost
 
+                    # Check if this is the we are seeing this node, if not check for lesser cost in heapq
                     if node not in self.frontierList:
                         print ("node is: " + str(node))
                         heapq.heappush(self.frontier,(newCost,node))
                         self.grid.nodes[node].frontier = True
                         self.frontierList.append(node)
+                        # We need to heapify in order to recreat the list as the pq
                         heapq.heapify(self.frontier)
                         self.map[node] = newCost
+                        # Setting the previous of this node to current so we can connect for the path
                         self.previous[node] = current1[1]
                     else:
-                        print("\n\n In the else Part, where you should not be..\n")
+                        # Check each element in the frontier if the node has been prvioulsy entered in it
                         for each in self.frontier:
                                 if node == each[1] and newCost < each[0]:
                                     print("\n\n Removing some elements \n\n")
                                     self.frontier.remove[each]
                                     heapq.heapify(self.frontier)
                                     heapq.heappush(self.frontier,(newCost,node))
+                                    # Deleting the node from the map to insert with the smaller cost
+                                    del self.map[node]
+                                    self.map[node] = newCost
+                        # Setting the previous of this node to current so we can connect for the path
                         self.previous[node] = current1[1]          
             else:
                 print("out of range: ", node)
     
+    # A Function which will help calculate the heuristic cost
     def heuristicFunc(self,node1,node2):
         dis = abs(node1[0]-node2[0]) + abs(node1[1]-node2[1])
-        print("H cost is: " + str(dis) + " \n\n\n")
         return dis
 
     def astar_step(self):
-        #[Hint] you need to declare a heuristic function for Astar
-        #[Hint] you can get the cost of a node by node.cost()
+        # Check if the frontier is empty 
         if not self.frontier:
             self.failed = True
             print("no path")
             return
 
+        # Extract first element from the priority queue
         current1 = heapq.heappop(self.frontier)
-        print("current node: ", current1)
-        #...
+        # Setting the checks to proper boolean value 
         self.grid.nodes[current1[1]].checked = True
         self.grid.nodes[current1[1]].frontier = False
         self.explored.append(current1[1])
         
+        # Check to see if the current node is the goal node 
         if current1[1] == self.goal:
             self.finish = True
             return 
@@ -227,7 +240,6 @@ class Agent:
 
         #Going through each node in the list called children, which contains all the children/puddle near the current node
         for node in children:
-            #See what happens if you disable this check here
             if node in self.explored or node in self.frontier:
                 print("explored before: ", node)
                 continue
@@ -242,38 +254,34 @@ class Agent:
                     print("puddle at: ", node)
                     continue
                 else:
-                    #Setting the previous node if the 'node' we are working is an actualy allowed coordinate in the grid(node)
-                    # Checking if the node is in the frontire or no
+                    # Getting the real cost of the node 
                     currCost = self.grid.nodes[node].cost()
+
+                    # Checking if the previous of 'node' exist in the map
+                    if current1[1] in self.map:
+                        currCost = currCost + self.map[current1[1]]
+                    
+                    # Adding the heuristic Cost to the newCost
                     newCost = currCost + self.heuristicFunc(current1[1],node)
                     
+                     # Check each element in the frontier if the node has been prvioulsy entered in it    
                     if node not in self.frontierList:
-                        print ("node is: " + str(node))
                         heapq.heappush(self.frontier,(newCost,node))
                         self.grid.nodes[node].frontier = True
                         self.frontierList.append(node)
+                        # Deleting the node from the map to insert with the smaller cost
                         heapq.heapify(self.frontier)
-                        self.map[node] = newCost
                         self.previous[node] = current1[1]
+                        self.map[node] = newCost
                     else:
-                        print("\n\n In the else Part, where you should not be..\n")
                         for each in self.frontier:
                                 if node == each[1] and newCost < each[0]:
-                                    print("\n\n Removing some elements \n\n")
                                     self.frontier.remove[each]
                                     heapq.heapify(self.frontier)
                                     heapq.heappush(self.frontier,(newCost,node))
+                                    # Deleting the node from the map to insert with the smaller cost 
+                                    del self.map[node]
+                                    self.map[node] = newCost
                         self.previous[node] = current1[1]            
-                        
-                        """
-                        if node in self.frontierList:
-                            if node == each[1] and each[0] > newCost:
-                                print("Duplicate node is:" + str(node) + " and exis node is: " + str(each[1]))
-                                #remove the old node and add the new one
-                                self.frontier.remove(node)
-                                heapify(self.frontier)
-                                heapq.heappush(self.frontier,(newCost,node))
-                        """
-                        # Setting the frontire of the given 'node' to true, to indicate it is non-empty
             else:
                 print("out of range: ", node)
